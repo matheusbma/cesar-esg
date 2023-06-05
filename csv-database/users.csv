@@ -1,0 +1,2 @@
+id,email,password
+1,test@email.com,pbkdf2:sha256:600000$0K9Ja7PfwaJDh9ow$a725c57b6cf62f303d271173f12b7392eb6ebf67c80370c9aaa1203a591f70e0
