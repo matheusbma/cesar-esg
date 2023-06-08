@@ -13,9 +13,9 @@ app.config['SECRET_KEY'] = 'esgcesar'
 df_users = pd.read_csv("./csv-database/users.csv")
 
 ### Dados para teste:
-df_adm = pd.read_csv("./csv-database/dados_adm.csv")
-df_socio = pd.read_csv("./csv-database/dados_socio.csv")
-df_socioamb = pd.read_csv("./csv-database/dados_socioamb.csv")
+df_gov = pd.read_csv("./csv-database/gov_data.csv")
+df_social = pd.read_csv("./csv-database/social_data.csv")
+df_env = pd.read_csv("./csv-database/env_data.csv")
 
 # Função para gerar o token de acesso do usuário
 def generate_token(user_id):
@@ -28,6 +28,7 @@ def generate_token(user_id):
 
     return token
 
+# Função para verificar se o token é válido
 def required_token(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -48,6 +49,16 @@ def required_token(f):
         return f(*args, **kwargs)
 
     return decorated
+
+# Função para pegar os dados dos 5 primeiro dados do csv
+def get_csv_head_data():
+    obj_data = {
+        "gov": df_gov.to_dict(orient="records"),
+        "social": df_social.to_dict(orient="records"),
+        "env": df_env.to_dict(orient="records")
+    }
+    
+    return obj_data
 
 @app.route("/login", methods=["POST"])
 def login():  
@@ -80,43 +91,74 @@ def login():
 
 @app.route("/overview", methods=["GET"])
 @required_token
-def geral():
-    x = df_adm.head(5)
-    return jsonify(x.to_dict(orient="records")), 200
+def overview():
+    data = get_csv_head_data()
+    head_gov = data["gov"][0:5]
+    head_social = data["social"][0:5]
+    head_env = data["env"][0:5]
+    
+    response = {
+        "gov": head_gov,
+        "social": head_social,
+        "env": head_env
+    }
 
-@app.route("/camada/E")
-@required_token
-def camadaE():
-    return "Camada E"
+    return response, 200
 
-@app.route("/camada/S")
+@app.route("/layer/E")
 @required_token
-def camadaS():
-    return "Camada S"
+def layerE():
+    data = get_csv_head_data()
+    env_data = data["env"]
+    
+    response = {
+        "env": env_data
+    }
+    
+    return response, 200
 
-@app.route("/camada/G")
+@app.route("/layer/S")
 @required_token
-def camadaG():
-    return "Camada G"
+def layerS():
+    data = get_csv_head_data()
+    social_data = data["social"]
+    
+    response = {
+        "social": social_data
+    }
+    
+    return response, 200
 
-@app.route("/monitoramento")
+@app.route("/layer/G")
 @required_token
-def monitoramente():
-    return "Monitoramento"
+def layerG():
+    data = get_csv_head_data()
+    gov_data = data["gov"]
+    
+    response = {
+        "gov": gov_data
+    }
+    
+    return response, 200
+
+@app.route("/monitoring")
+@required_token
+def monitoring():
+    return "monitoring"
 
 @app.route("/email")
 @required_token
 def email():
     return "Email"
 
-@app.route("/projecao")
+@app.route("/projection")
 @required_token
-def projecao():
-    return "Projecao"
+def projection():
+    return "projection"
 
-@app.route("/relatorio")
+@app.route("/report")
 @required_token
-def relatorio():
-    return "Relatorio"
+def report():
+    return "report"
 
 app.run(debug=True)

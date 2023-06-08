@@ -1,8 +1,9 @@
-indicador,unidade,complemento
+indicator,unit,complement
 Consumo mensal de Energia Elétrica,115,KW
 Proporção de Energia elétrica consumida do Mercado Livre,46.7,%
 Proporção de Energia elétrica consumida do Mercado Cativo,53.3,%
 Peso total de resíduos sólidos produzidos,3.950,kg
+Consumo Mensal de Água,44,m³
 Gravimetrida dos resíduos sólidos (Orgânicos e rejeitos),1.263,kg
 Gravimetrida dos resíduos sólidos (Papel/Papelão),1.841,kg
 Gravimetrida dos resíduos sólidos (Plástico),257,kg
@@ -11,7 +12,6 @@ Gravimetrida dos resíduos sólidos (Eletrônicos),505,kg
 Gravimetrida dos resíduos sólidos (Pilhas e baterias),12,kg
 Proporção de Resíduos destinados ao aterro,32,%
 Proporção de resíduos destindos à reciclagem,68,%
-Consumo Mensal de Água,44,m³
 Proporção da água tratada que é consumida,100,%
 Consumo mensal de combustível,442.9,L
 Qualidade do ar no ambiente de trabalho,-,-
