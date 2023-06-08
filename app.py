@@ -60,6 +60,22 @@ def get_csv_head_data():
     
     return obj_data
 
+def data_to_dataframe(data):
+    df1 = pd.DataFrame(data['gov'])
+    df2 = pd.DataFrame(data['social'])
+    df3 = pd.DataFrame(data['env'])
+    
+    gov_row = pd.DataFrame([['Governance','-','-']], columns=['indicator','unit','complement'])
+    social_row = pd.DataFrame([['Social','-','-']], columns=['indicator','unit','complement'])
+    env_row = pd.DataFrame([['Environment','-','-']], columns=['indicator','unit','complement'])
+    
+    df_total = pd.concat([gov_row,df1,social_row,df2,env_row,df3], axis=0).reset_index(drop=True)
+    
+    return df_total
+
+def check_valid_data():
+    return True
+
 @app.route("/login", methods=["POST"])
 def login():  
     content = request.get_json()
@@ -72,13 +88,12 @@ def login():
         if row["email"] == email:
             user_id = row["id"]
             hash_password = row["password"]
+            checked_password = check_password_hash(hash_password, password)
             break
-    
     if user_id == None:
         return jsonify({"status": "Error", "message": "User not found!"}), 404
 
-    back_password = check_password_hash(hash_password, password)
-    if back_password:
+    if checked_password:
         token = generate_token(user_id)
         response = {
             "status": "Success", 
@@ -141,6 +156,8 @@ def layerG():
     
     return response, 200
 
+### Falta daqui pra baixo
+
 @app.route("/monitoring")
 @required_token
 def monitoring():
@@ -159,6 +176,21 @@ def projection():
 @app.route("/report")
 @required_token
 def report():
+    data = get_csv_head_data()
+    df = data_to_dataframe(data)
+    for i,r in df.iterrows():
+        if str(r['complement']) == "-":
+            pass
+        elif str(r['complement']).upper() == 'R$':
+            df.loc[i,'unit'] = f"{r['complement']}{r['unit']}"
+        elif str(r['complement']).lower() == 'anos':
+            df.loc[i,'unit'] = f"{r['unit']} {r['complement']}"
+        else:
+            df.loc[i,'unit'] = f"{r['unit']}{r['complement']}"
+    
+    df = df.drop(columns=['complement'])
+    df.to_csv("./report.csv")
+    
     return "report"
 
 app.run(debug=True)
