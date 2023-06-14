@@ -174,11 +174,6 @@ def layerG():
     
     return response, 200
 
-@app.route("/monitoring")
-@required_token
-def monitoring():
-    return "monitoring"
-
 @app.route("/email")
 @required_token
 def email():
@@ -187,8 +182,8 @@ def email():
     email = content["email"]
     
     # Configurar informações de e-mail:
-    from_email = "mbma.dev@gmail.com"
-    password = "Musiclife2"
+    from_email = "" # e-mail de envio do Cesar.org.br
+    password = "" # senha do e-mail de envi do Cesar.org.br
     to_email = email
     subject = 'Atualização no dados do dashboard GOVERNANÇA'
     message = f'Olá, \n\nOs seguintes dados do dashboard foram atualizados: \n{"s"} \n\nAtenciosamente, \nESG Info'
@@ -224,16 +219,16 @@ def report():
     data = get_csv_data()
     df = data_to_dataframe(data)
     for i,r in df.iterrows():
-        if str(r['complement']) == "-":
+        if str(r['unit']) == "-":
             pass
-        elif str(r['complement']).upper() == 'R$':
-            df.loc[i,'unit'] = f"{r['complement']}{r['unit']}"
-        elif str(r['complement']).lower() == 'anos':
-            df.loc[i,'unit'] = f"{r['unit']} {r['complement']}"
+        elif str(r['unit']).upper() == 'R$':
+            df.loc[i,'unit'] = f"{r['unit']}{r['unit']}"
+        elif str(r['unit']).lower() == 'anos':
+            df.loc[i,'unit'] = f"{r['unit']} {r['unit']}"
         else:
-            df.loc[i,'unit'] = f"{r['unit']}{r['complement']}"
+            df.loc[i,'unit'] = f"{r['unit']}{r['unit']}"
     
-    df = df.drop(columns=['complement'])
+    df = df.drop(columns=['unit'])
     df.to_csv("./report.csv")
     
     return jsonify({"status": "Success", "message": "Report generated!"}), 200
