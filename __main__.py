@@ -1,4 +1,5 @@
 import jwt
+import smtplib
 import pandas as pd
 from functools import wraps
 from flask import Flask, request, jsonify
@@ -16,6 +17,7 @@ df_users = pd.read_csv("./csv-database/users.csv")
 df_gov = pd.read_csv("./csv-database/gov_data.csv")
 df_social = pd.read_csv("./csv-database/social_data.csv")
 df_env = pd.read_csv("./csv-database/env_data.csv")
+df_energy_part = pd.read_csv("./csv-database/energy_part_data.csv")
 
 # Função para gerar o token de acesso do usuário
 def generate_token(user_id):
@@ -51,30 +53,46 @@ def required_token(f):
     return decorated
 
 # Função para pegar os dados dos 5 primeiro dados do csv
-def get_csv_head_data():
+def get_csv_data():
     obj_data = {
         "gov": df_gov.to_dict(orient="records"),
         "social": df_social.to_dict(orient="records"),
-        "env": df_env.to_dict(orient="records")
+        "env": df_env.to_dict(orient="records"),
+        "energy": df_energy_part.to_dict(orient="records")
     }
     
     return obj_data
 
+# Função para transformar os dados em um dataframe
 def data_to_dataframe(data):
     df1 = pd.DataFrame(data['gov'])
     df2 = pd.DataFrame(data['social'])
     df3 = pd.DataFrame(data['env'])
     
-    gov_row = pd.DataFrame([['Governance','-','-']], columns=['indicator','unit','complement'])
-    social_row = pd.DataFrame([['Social','-','-']], columns=['indicator','unit','complement'])
-    env_row = pd.DataFrame([['Environment','-','-']], columns=['indicator','unit','complement'])
+    gov_row = pd.DataFrame([['Governance','-','-']], columns=['indicator','value','unit'])
+    social_row = pd.DataFrame([['Social','-','-']], columns=['indicator','value','unit'])
+    env_row = pd.DataFrame([['Environment','-','-']], columns=['indicator','value','unit'])
     
     df_total = pd.concat([gov_row,df1,social_row,df2,env_row,df3], axis=0).reset_index(drop=True)
     
     return df_total
 
-def check_valid_data():
-    return True
+def projection_data(data):
+    values = []
+    df = pd.DataFrame(data)
+    
+    for i, r in df.iterrows():
+        values.append(r['value'])
+        
+    months = len(values)
+    mean = int(sum(values)/months)
+    
+    while months < 12:
+        values.append(mean)
+        months += 1
+    
+    final_mean = int(sum(values)/months)
+    return final_mean
 
 @app.route("/login", methods=["POST"])
 def login():  
@@ -107,7 +125,7 @@ def login():
 @app.route("/overview", methods=["GET"])
 @required_token
 def overview():
-    data = get_csv_head_data()
+    data = get_csv_data()
     head_gov = data["gov"][0:5]
     head_social = data["social"][0:5]
     head_env = data["env"][0:5]
@@ -123,7 +141,7 @@ def overview():
 @app.route("/layer/E")
 @required_token
 def layerE():
-    data = get_csv_head_data()
+    data = get_csv_data()
     env_data = data["env"]
     
     response = {
@@ -135,7 +153,7 @@ def layerE():
 @app.route("/layer/S")
 @required_token
 def layerS():
-    data = get_csv_head_data()
+    data = get_csv_data()
     social_data = data["social"]
     
     response = {
@@ -147,7 +165,7 @@ def layerS():
 @app.route("/layer/G")
 @required_token
 def layerG():
-    data = get_csv_head_data()
+    data = get_csv_data()
     gov_data = data["gov"]
     
     response = {
@@ -155,8 +173,6 @@ def layerG():
     }
     
     return response, 200
-
-### Falta daqui pra baixo
 
 @app.route("/monitoring")
 @required_token
@@ -166,17 +182,46 @@ def monitoring():
 @app.route("/email")
 @required_token
 def email():
-    return "Email"
+    content = request.get_json()
+    
+    email = content["email"]
+    
+    # Configurar informações de e-mail:
+    from_email = "mbma.dev@gmail.com"
+    password = "Musiclife2"
+    to_email = email
+    subject = 'Atualização no dados do dashboard GOVERNANÇA'
+    message = f'Olá, \n\nOs seguintes dados do dashboard foram atualizados: \n{"s"} \n\nAtenciosamente, \nESG Info'
+        
+    msg = f"Subject: {subject}\n\n{message}"
+    
+    try:
+        # Configurar servidor SMTP
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(from_email, password)
+
+        # Enviar e-mail e encerrar servidor
+        server.sendmail(from_email, to_email, msg)
+        server.quit()
+        
+        return jsonify({"status": "Success", "message": "Email sent!"}), 200
+    except Exception as e:
+        return jsonify({"status": "Error", "message": f"Email not sent!, {e}"}), 400
 
 @app.route("/projection")
 @required_token
 def projection():
-    return "projection"
+    data = get_csv_data()
+    energy_data = data["energy"]
+    
+    projection_output = projection_data(energy_data)
+    
+    return jsonify({"status": "Success", "message": "Projection generated!", "projection": projection_output}), 200
 
 @app.route("/report")
 @required_token
 def report():
-    data = get_csv_head_data()
+    data = get_csv_data()
     df = data_to_dataframe(data)
     for i,r in df.iterrows():
         if str(r['complement']) == "-":
@@ -191,6 +236,7 @@ def report():
     df = df.drop(columns=['complement'])
     df.to_csv("./report.csv")
     
-    return "report"
+    return jsonify({"status": "Success", "message": "Report generated!"}), 200
 
-app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
