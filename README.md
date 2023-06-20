@@ -44,6 +44,8 @@ Para instalar as bibliotecas necessárias para a aplicação, use o comando `pip
 - ### Execução
 Para executar a aplicação, use o comando `python __main__.py`
 
+- ### Testes
+Para testar a aplicação, importe no Postman o arquivo Json `cesar-esg.postman_collection.json` e execute as requisições.
 <br>
 
 ## Desenvolvedores
